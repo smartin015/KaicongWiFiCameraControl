@@ -1,4 +1,4 @@
-from KaicongOutput import KaicongOutput
+from base.KaicongOutput import KaicongOutput
 import urllib2
 
 class KaicongMotor(KaicongOutput):
