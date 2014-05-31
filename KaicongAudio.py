@@ -2,8 +2,13 @@ from base.KaicongInput import KaicongInput
 import audioop
 
 class KaicongAudio(KaicongInput):
-    HEADER_SIZE = 32 # Bytes
-    PACKET_SIZE = 544 # Bytes
+    HEADER_SZ = 32 # Bytes
+    PACKET_SZ = 544 # Bytes
+    SAMPLE_SZ = 2 # Bytes
+    
+    RATE_HZ = 8000
+    NCHANNELS = 1 
+    
     URI = "http://%s:81/audiostream.cgi?user=%s&pwd=%s&streamid=2&filename="
     
     def __init__(self, domain, callback=None, user="admin", pwd="123456"):
@@ -12,23 +17,27 @@ class KaicongAudio(KaicongInput):
             callback,
             domain, 
             KaicongAudio.URI, 
-            KaicongAudio.PACKET_SIZE, 
+            KaicongAudio.PACKET_SZ, 
             user, 
             pwd
         )
 
     def handle(self, data):
         # Strip the header at the beginning of the data
-        data = data[KaicongAudio.HEADER_SIZE:]
+        data = data[KaicongAudio.HEADER_SZ:]
         
         # Decompress from ADPCM (differential) to PCM-16L (WAV) format
         result = ""
         state = None
-        for i in xrange(0, len(data)-5, 2):  #TODO: No magic numbers
-            adpcmfragment = data[i:i+2]
-            (sample, state) = audioop.adpcm2lin(adpcmfragment, 2, state)
+        for i in xrange(0, len(data), KaicongAudio.SAMPLE_SZ):
+            adpcmfragment = data[i:i+KaicongAudio.SAMPLE_SZ]
+            (sample, state) = audioop.adpcm2lin(
+                                adpcmfragment, 
+                                KaicongAudio.SAMPLE_SZ, 
+                                state)
             result += sample
     
+        print len(result)
         return result
         
         
@@ -45,17 +54,14 @@ if __name__ == "__main__":
     
     class Speaker:
         def __init__(self):
-            chunk = 1016 
-            FORMAT = pyaudio.paInt16 
-            CHANNELS = 1 
-            RATE = 8000 
+            CHUNK_SZ = 1016
             self.p = pyaudio.PyAudio() 
-            self.stream = self.p.open(format = FORMAT, 
-                            channels = CHANNELS, 
-                            rate = RATE, 
+            self.stream = self.p.open(format = pyaudio.paInt16, 
+                            channels = KaicongAudio.NCHANNELS, 
+                            rate = KaicongAudio.RATE_HZ, 
                             input = True, 
                             output = True, 
-                            frames_per_buffer = chunk) 
+                            frames_per_buffer = CHUNK_SZ) 
             
         def play(self, numpy_buf):
             signal = wave.struct.pack("%dh"%(len(numpy_buf)), *list(numpy_buf))
