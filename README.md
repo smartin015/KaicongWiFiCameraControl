@@ -9,4 +9,4 @@ Dependencies:
 * PyAudio
 * PyGame
 
-An instructable is available [HERE](http://www.instructables.com/id/EKCHTT3HVTLU3XI/).
+An instructable is available [HERE](http://www.instructables.com/id/Hack-a-30-WiFi-Pan-Tilt-Camera-Video-Audio-and-Mot/).
